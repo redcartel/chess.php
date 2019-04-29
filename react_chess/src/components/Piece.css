@@ -1,0 +1,17 @@
+
+.Piece {
+    font-size: 50px;
+    line-height: 60px;
+    width: 100%;
+    align: center;
+}
+
+.Piece.white {
+    color: white;
+    text-shadow: 1px 1px black;
+}
+
+.Piece.black {
+    text-shadow: 1px 1px white;
+    color: black;
+}

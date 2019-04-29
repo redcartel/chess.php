@@ -1,0 +1,52 @@
+.Board {
+    padding: 40px auto;
+    background-image: url(http://localhost/parkbg.jpg);
+    background-size: 100%;
+}
+
+.Board table {
+    margin: auto;
+    background-color: #aa9;
+}
+
+.w .Board table {
+    border: solid white 5px;
+}
+
+.B .Board table {
+    border: solid black 5px;
+}
+
+.Board .spacer {
+    height: 20px;
+}
+
+.Board td {
+    width: 60px;
+    height: 60px;
+    border: solid black 1px;
+}
+
+.Board td.black {
+    background-color: #775;
+}
+
+.Board td.white {
+    background-color: #cca;
+}
+
+.Board td.highlight {
+    background-color: #4f4!important;
+}
+
+/*
+.w .Board table {
+    background-color: white;
+    border: solid white 4px;
+}
+
+.B .Board table {
+    background-color: black;
+    border: solid black 4px;
+}
+*/
