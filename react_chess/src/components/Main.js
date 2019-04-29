@@ -2,6 +2,8 @@ import React, { Component } from 'react'
 import Board from './Board'
 import Info from './Info'
 
+const apiRoot = 'http://localhost:8000'
+
 class Header extends Component {
   render () {
     return (
@@ -67,11 +69,17 @@ class Main extends Component {
     if (this.state.side !== 'w' && this.state.side !== 'B') {
       this.setState({
         side: this.state.turn % 2 === 0 ? 'w' : 'B'
+      }, () => {
+        window.sessionStorage.setItem('side', this.state.side)
+        console.log(`new side ${this.state.side} for turn ${this.state.turn}`)
       });
     } else {
       this.setState({
         side: this.state.side === 'w' ? 'B' : 'w'
-      }, () => window.sessionStorage.setItem('side', this.state.side));
+      }, () => { 
+        window.sessionStorage.setItem('side', this.state.side)
+        console.log('swap sides')
+      });
     }
   }
 
@@ -127,7 +135,7 @@ class Main extends Component {
 
   move = (rowFrom, colFrom, rowTo, colTo) => {
     const args = `?rf=${rowFrom}&cf=${colFrom}&rt=${rowTo}&ct=${colTo}&turn=${this.state.turn}`
-    const endpoint = `http://localhost:8000/index.php${args}`
+    const endpoint = `${apiRoot}/chess.php${args}`
     fetch(endpoint, {
       method: 'put',
       mode: 'cors'
@@ -148,7 +156,7 @@ class Main extends Component {
   }
 
   pingServer = () => {
-    fetch('http://localhost:8000/index.php')
+    fetch(`${apiRoot}/chess.php`)
       .then(blob => blob.json())
       .then(json => {
         if (json.turn === this.state.turn) {
@@ -163,21 +171,38 @@ class Main extends Component {
   }
 
   componentDidMount () {
-    let loadState = window.sessionStorage.getItem('side') === null ? '' : window.sessionStorage.getItem('side');
-    if (loadState === '') {
-      loadState = this.state.turn % 2 === 0 ? 'w' : 'B';
-      window.sessionStorage.setItem('side', loadState);
-    }
+    const loadState = window.sessionStorage.getItem('side') === null ? '' : window.sessionStorage.getItem('side');
+    console.log(`loadstate: ${loadState}, turn: ${this.state.turn}`)
     if (this.state.squares.length === 0) {
-      console.log('cDM')
-      fetch('http://localhost:8000/index.php')
+      fetch('http://localhost:8000/chess.php')
         .then(blob => blob.json())
         .then(json => {
-          this.setState({ ...json, 'side': loadState})
-        })
+          this.setState({ ...json, side: loadState}, ()=>{
+            if (this.state.side === '') {
+              this.setState({ side:
+                this.state.turn % 2 === 0 ? 'w' : 'B'
+              }, ()=>{
+                console.log('side set from turn')
+                window.sessionStorage.setItem('side', this.state.side);
+              });
+            }
+          });
+      })
     }
     else {
-      this.setState({ 'side': loadState});
+      console('cDM, squares exist')
+      if (loadState !== 'w' && loadState !== 'B') {
+        this.setState({'side':
+          this.state.turn % 2 === 0 ? 'w' : 'B'
+        }, () => {
+          console.log('side set from turn')
+          window.sessionStorage.setItem('side', this.state.side)
+        });
+      }
+      else {
+        console.log('side set from loadState')
+        this.setState({'side': loadState})
+      };
     }
   }
 

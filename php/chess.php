@@ -1,15 +1,26 @@
 <?php
-error_log('ok');
+/*
+ * Carter's Chess Game
+ * Made in 2019 for the public domain
+ *
+ * JSON web API for React game frontend
+ *
+ * TODO: lots! Multiple boards, en passant and castling, check and checkmate
+ * maybe A.I.? Leaderboard? User accounts? Real chess notation used internally?
+ * The sky is the limit
+ */
 
+error_log('chess.php start');
+
+// CORS
 header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, PUT, POST, HEAD");
 header("Content-Type: applicaiton/json");
-header("Access-Control-Allow-Methods: *");
 
 $pdo = new PDO("mysql:host=127.0.0.1;dbname=chess", "redcartel", "redring9");
 
-
 class ChessGame {
-
+    /* Chess game state & rules engine */
     public $squares;
     public $turn;
     public $info;
@@ -19,7 +30,6 @@ class ChessGame {
             $this->setFromStr($text);
         }
         else {
-            $this->info = [];
             $this->squares = array();
             array_push($this->squares, array('Br','Bk','Bb','BQ','BK','Bb','Bk','Br'));
             array_push($this->squares, array('Bp','Bp','Bp','Bp','Bp','Bp','Bp','Bp'));
@@ -29,22 +39,21 @@ class ChessGame {
             array_push($this->squares, array('wp','wp','wp','wp','wp','wp','wp','wp'));
             array_push($this->squares, array('wr','wk','wb','wQ','wK','wb','wk','wr'));
 
-
             $this->turn = 0;
+            $this->info = [];
         }
     }
 
     function legalMove($rowFrom, $colFrom, $rowTo, $colTo) {
+        /* is a move legal, Boolean */
 
         if ($this->victory() !== '') {
-            error_log('victoryFalse');
             return False;
         }
 
         $turnColor = $this->turn % 2 === 0 ? 'w' : 'B';
 
         if ($turnColor !== $this->color($rowFrom, $colFrom)) {
-            error_log('wrongTurn');
             return False;
         }
 
@@ -53,11 +62,11 @@ class ChessGame {
             return True;
         }
 
-        error_log('noListFalse');
         return False;
     }
 
     function color($r, $c) {
+        /* Color of piece at row, column position */
         $str = $this->squares[$r][$c];
         if (strlen($str) !== 2) {
             return False;
@@ -66,6 +75,7 @@ class ChessGame {
     }
 
     function piece($r, $c) {
+        /* Piece type at row, column position */
         $str = $this->squares[$r][$c];
         if (strlen($str) !== 2) {
             return False;
@@ -74,6 +84,9 @@ class ChessGame {
     }
 
     function getMoves($r, $c) {
+        /* return array of legal destinations for a piece at a given row &
+         * column. TODO: En passant and castling not implemented. */
+
         if (!$this->color($r, $c)) {
             return [];
         }
@@ -99,6 +112,7 @@ class ChessGame {
     }
 
     function pawnMoves($r, $c, $color) {
+        /* legal positions for a pawn to move */
         $moves = [];
         if ($color === 'w') {
             if ($r === 6) {
@@ -136,26 +150,32 @@ class ChessGame {
     }
 
     function rookMoves($r, $c, $color) {
+        /* legal positions for a rook to move */
         return $this->deltaMoves($r, $c, $color, [[-1,0],[0,1],[1,0],[0,-1]]);
     }
 
     function bishopMoves($r, $c, $color) {
+        /* legal positions for a bishop to move */
         return $this->deltaMoves($r, $c, $color, [[-1,-1],[1,1],[-1,1],[1,-1]]);
     }
 
     function queenMoves($r, $c, $color) {
+        /* legal positions for a queen to move */
         return $this->deltaMoves($r, $c, $color, [[-1,0],[-1,-1],[-1,1],[0,-1],[0,1],[1,0],[1,-1],[1,1]]);
     }
 
     function knightMoves($r, $c, $color) {
+        /* legal positions for a knight to move */
         return $this->oneDeltaMoves($r, $c, $color, [[-2,1],[-2,-1],[2,1],[2,-1],[-1,2],[-1,-2],[1,2],[1,-2]]);
     }
 
     function kingMoves($r, $c, $color) {
+        /* legal positions for a king to move */
         return $this->oneDeltaMoves($r, $c, $color, [[-1,0],[-1,-1],[-1,1],[0,-1],[0,1],[1,0],[1,-1],[1,1]]);
     }
 
     function deltaMoves($r, $c, $color, $deltas) {
+        /* generate legal moves arbitrary distance in multiple directions */
         $moves = [];
         $opColor = $color === 'w' ? 'B': 'w';
         foreach($deltas as $delta) {
@@ -184,6 +204,7 @@ class ChessGame {
     }
 
     function oneDeltaMoves($r, $c, $color, $deltas) {
+        /* generate legal moves one hop away (knights & kings) */
         $moves = [];
         $opColor = $color === 'w' ? 'B' : 'w';
         foreach($deltas as $delta) {
@@ -204,6 +225,7 @@ class ChessGame {
     }
 
     function moveInList($rowTo, $colTo, $moveList) {
+        /* ask if a square appears in a list of squares, Boolean*/
         foreach($moveList as $move) {
             if ($rowTo === $move[0] && $colTo === $move[1]) {
                 return True;
@@ -214,12 +236,15 @@ class ChessGame {
     }
 
     function move($rowFrom, $colFrom, $rowTo, $colTo) {
+        /* move a piece, no check for legality */
         $piece = $this->squares[$rowFrom][$colFrom];
         $this->squares[$rowFrom][$colFrom] = '';
         $this->squares[$rowTo][$colTo] = $piece;
     }
 
     function victory() {
+        /* checks for victory (right now, if a king has been taken)
+         * TODO: check & checkmate rules */
         $whiteKingCount = 0;
         $blackKingCount = 0;
         foreach ($this->squares as $row) {
@@ -242,6 +267,7 @@ class ChessGame {
     }
 
     function toStr() {
+        /* generate string representation of game state for writing to DB */
         $str = (string)($this->turn);
         foreach ($this->squares as $row) {
             foreach ($row as $square) {
@@ -252,6 +278,7 @@ class ChessGame {
     }
 
     function setFromStr($str) {
+        /* set squares & turn from string. for loading from DB */
         $vals = explode(',', $str);
         $this->turn = (int)($vals[0]);
         $p = 1;
@@ -266,36 +293,43 @@ class ChessGame {
         }
     }
 
-    function infoString() {
+    function stringInfo() {
+        /* encode extra info as a string for writing to DB */
+        /* TODO: info data not implemented
         $infstr = '';
         $first = True;
         foreach ($this->info['captures'] as $capture) {
             $infstr += "$capture,";
         }
         return $infstr;
+        */
     }
 
-    function setInfo($str) {
+    function setInfoFromStr($str) {
+        /* TODO: info data not implemented */
     }
 
     function toJSON() {
+        /* JSON representation of boardstate, for API response */
         $vals = array(
             "squares" => $this->squares,
             "turn" => $this->turn,
             "victory" => $this->victory(),
             "str" => $this->toStr(),
-            "info" => $this->stringinfo
+            "info" => $this->stringInfo()
         );
         return json_encode($vals);
     }
 
     function writeToDB() {
+        /* save gamestate to DB */
         global $pdo;
         $statement = $pdo->prepare('INSERT INTO positions(board) VALUES(?);');
         $statement->execute([$this->toStr()]);
     }
 
     function score() {
+        /* scoring, maybe for AI at some point. not used right now */
         if ($this->victory() === 'w') {
             return [999999,-999999];
         }
@@ -305,10 +339,10 @@ class ChessGame {
         }
 
         $scores = [
-            'p' => 1.1,
+            'p' => 1.01,
             'b' => 3,
             'k' => 3.1,
-            'r' => 5,
+            'r' => 5.1,
             'Q' => 9
         ];
 
@@ -329,42 +363,49 @@ class ChessGame {
 }
 
 $board = new ChessGame();
+
+/* LOAD CURRENT BOARD IF ONE EXISTS */
 $sql = "SELECT board FROM positions ORDER BY pk DESC LIMIT 1";
 $statement = $pdo->query($sql);
 $row = $statement->fetch();
-
 if ($row) {
     $board->setFromStr($row[0]);
 }
+
+/* ON VERY FIRST EXECUTION, CREATE NEW BOARD IN FRESH DB */
 else {
     $board->writeToDB();
 }
 
+/* RESPOND TO GET REQUEST WITH BOARD STATE */
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     echo $board->toJSON();
     exit();
 }
 
+/* PUT REQUESTS ARE MOVE OR BOARD RESET ACTIONS */
 if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     $args = [];
     parse_str($_SERVER['QUERY_STRING'], $args);
+    /* IF MOVE COORDS ARE 'x' THAT IS A REQUEST TO RESET THE BOARD */
     if ($args['rf'] === 'x') {
         $board = new ChessGame(); 
         $board->writeToDB();
     }
     if ($args['turn'] === "$board->turn") {
-        $rf = (int)$args['rf'];
-        $cf = (int)$args['cf'];
-        $rt = (int)$args['rt'];
-        $ct = (int)$args['ct'];
+        /* ONLY MOVE IF THE USER AND THE BOARD ARE ON THE SAME TURN */
+        $rf = (int)$args['rf']; // row from 
+        $cf = (int)$args['cf']; // col from
+        $rt = (int)$args['rt']; // row to
+        $ct = (int)$args['ct']; // col to
         if ($board->legalMove($rf, $cf, $rt, $ct)) {
             $board->move($rf, $cf, $rt, $ct);
             $board->turn++;
             $board->writeToDB();
         }
     }
+    /* RESPOND WITH BOARD STATE */
     echo $board->toJSON();
     exit();
 }
-
 ?>
