@@ -3,7 +3,6 @@ node_modules
 package-lock.json
 venv/
 php/asset-manifest.json
-php/favicon.ico
 php/index.html
 php/manifest.json
 php/precache-manifest*
