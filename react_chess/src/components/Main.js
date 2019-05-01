@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import Board from './Board'
 import Info from './Info'
 
-const apiRoot = 'http://localhost:8000'
+const apiRoot = 'http://157.230.214.253'
 
 class Header extends Component {
   render () {
@@ -19,7 +19,7 @@ class Footer extends Component {
   render () {
     return (
       <footer className='Footer'>
-        <p>{'&copy'}2019</p>
+        <p>Made for the public domain by Carter Adams, 2019</p>
       </footer>
     )
   }
@@ -174,7 +174,7 @@ class Main extends Component {
     const loadState = window.sessionStorage.getItem('side') === null ? '' : window.sessionStorage.getItem('side');
     console.log(`loadstate: ${loadState}, turn: ${this.state.turn}`)
     if (this.state.squares.length === 0) {
-      fetch('http://localhost:8000/chess.php')
+      fetch(`${apiRoot}/chess.php`)
         .then(blob => blob.json())
         .then(json => {
           this.setState({ ...json, side: loadState}, ()=>{
@@ -214,9 +214,6 @@ class Main extends Component {
       <main className={`Main ${this.state.side}`}>
         <Info parent={this} />
         {<Board parent={this} />}
-        <div class='Restart'>
-          <button onClick={this.restartClick}>Restart Game</button>
-        </div>
       </main>
     )
   }

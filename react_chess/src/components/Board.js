@@ -57,6 +57,10 @@ class Board extends Component {
           {this.rows(this.props.parent.state.squares)}
         </table>
         <div className='spacer'></div>
+      <div class='Restart'>
+  <button onClick={this.props.parent.restartClick}>Restart Game</button>
+</div>
+<div className='spacer'></div>
       </div>
     )
   }
