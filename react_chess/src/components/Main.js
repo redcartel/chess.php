@@ -2,6 +2,8 @@ import React, { Component } from 'react'
 import Board from './Board'
 import Info from './Info'
 
+//const apiRoot = 'http://1%57.230.214.253'
+//const apiRoot = 'http://l%ocalhost:8000'
 const apiRoot = 'http://157.230.214.253'
 
 class Header extends Component {
